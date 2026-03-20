@@ -1,57 +1,50 @@
 import os
-from dotenv import load_dotenv
 from supabase import create_client, Client
-from backend.app.schemas.item import ItemCreate
+from dotenv import load_dotenv
 
 load_dotenv()
 
-url: str = os.environ.get("SUPABASE_URL")
-key: str = os.environ.get("SUPABASE_KEY")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-supabase: Client = create_client(url, key)
+def get_or_create_parent_listing(url: str, source_id: int, raw_text: str, author: str) -> int:
+    data = {
+        "url": url,
+        "source_id": source_id,
+        "raw_text": raw_text,
+        "author": author,
+    }
+    
+    response = supabase.table("listings").upsert(data, on_conflict="url").execute()
+    
+    if response.data:
+        return response.data[0]['id']
+    else:
+        raise Exception(f"Failed to get/create listing ID for {url}")
 
-def save_scraped_item(item_data: ItemCreate):
-    """
-    Takes a validated Pydantic ItemCreate object and saves it 
-    across the listings, items, and item_attributes tables in Supabase.
-    """
-    try:
-        # Check if the URL already exists
-        existing = supabase.table('listings').select('id').eq('url', item_data.url).execute()
-        if existing.data:
-            print(f"Skipping: Listing already exists for URL: {item_data.url}")
-            return None
+def insert_child_gear_item(listing_id: int, category_id: int, attributes: dict):
+    item_data = {
+        "listing_id": listing_id,
+        "category_id": category_id
+    }
 
-        # Insert the listing container
-        listing_res = supabase.table('listings').insert({
-            'source_id': item_data.source_id,
-            'url': item_data.url,
-            'raw_text': item_data.raw_text,
-            'author': item_data.author
-        }).execute()
-        
-        # Insert the item
-        listing_id = listing_res.data[0]['id']
+    item_response = supabase.table("items").insert(item_data).execute()
 
-        item_res = supabase.table('items').insert({
-            'listing_id': listing_id,
-            'category_id': item_data.category_id
-        }).execute()
-        
-        item_id = item_res.data[0]['id']
+    if not item_response.data:
+        raise Exception("Failed to insert into items table.")
 
-        # Insert the item attributes
-        attributes_data = [
-            {'item_id': item_id, 'key': k, 'value': v} 
-            for k, v in item_data.attributes.items()
-        ]
-        
-        if attributes_data:
-            supabase.table('item_attributes').insert(attributes_data).execute()
+    new_item_id = item_response.data[0]['id']
 
-        print(f"✅ Successfully saved new gear! Item ID: {item_id}")
-        return item_id
+    attr_data_list = []
 
-    except Exception as e:
-        print(f"❌ Error saving to Supabase: {e}")
-        return None
+    for key, value in attributes.items():
+        if value and value.strip() != "":
+            attr_data_list.append({
+                "item_id": new_item_id,
+                "key": key,
+                "value": str(value)
+            })
+
+    if attr_data_list:
+        supabase.table("item_attributes").insert(attr_data_list).execute()
