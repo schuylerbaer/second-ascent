@@ -58,7 +58,7 @@ def run_scraper_pipeline():
                     "brand": str(item_dict.get("brand", "Unknown")),
                     "model": str(item_dict.get("model", "Unknown")),
                     "price": str(item_dict.get("price", "0.0")),
-                    "condition": str(item_dict.get("condition", "Unknown"))
+                    "condition": str(item_dict.get("condition", "Unknown")),
                     "size": str(item_dict.get("size", "N/A")),
                     "eu_size": str(item_dict.get("eu_size", "Unknown")),
                     "us_size": str(item_dict.get("us_size", "Unknown")),
