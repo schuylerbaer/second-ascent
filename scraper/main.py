@@ -5,7 +5,7 @@ from scraper.extractor import extract_post_data
 from scraper.matcher import GearMatcher
 from scraper.ai_parser import parse_gear_with_ai
 from scraper.notifier import EmailNotifier
-from backend.app.db_client import get_or_create_parent_listing, insert_child_gear_item
+from backend.app.db_client import supabase, get_or_create_parent_listing, insert_child_gear_item
 
 CATEGORY_MAP = {
     "Shoe": 1,
@@ -19,6 +19,8 @@ def run_scraper_pipeline():
 
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M')}] Scraper ran. Found {len(new_urls)} new posts.")
     
+    run_retroactive_alert_sweep()
+
     if not new_urls:
         return
     
@@ -98,7 +100,6 @@ def run_scraper_pipeline():
 
         time.sleep(2)
 
-    run_retroactive_alert_sweep()
 
 def run_retroactive_alert_sweep():
     """

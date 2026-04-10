@@ -5,9 +5,16 @@ from backend.app.db_client import supabase
 FORUM_URL = "https://www.mountainproject.com/forum/103989416/for-sale-for-free-want-to-buy"
 
 EXCLUDED_URLS = {
-    "https://www.mountainproject.com/forum/topic/124725725/free-geargiving-away-no-requests-v3",
-    "https://www.mountainproject.com/forum/topic/123717568/avoiding-scammers"
+    "https://www.mountainproject.com/forum/topic/124725725",
+    "https://www.mountainproject.com/forum/topic/123717568"
 }
+
+def normalize_url(url):
+    """Strips the dynamic title slug off the URL so it never changes"""
+    parts = url.split('?')[0].split('#')[0].split('/')
+    if len(parts) >= 6:
+        return f"https://www.mountainproject.com/forum/topic/{parts[5]}"
+    return url
 
 def get_new_listing_urls():
     headers = {
@@ -23,10 +30,11 @@ def get_new_listing_urls():
     post_links = []
     
     for a_tag in soup.select('table a[href*="/forum/topic/"]'):
-        url = a_tag.get('href')
-        clean_url = url.split('?')[0].split('#')[0]
+        raw_url = a_tag.get('href')
         
-        if clean_url not in post_links and "page=" not in clean_url and clean_url not in EXCLUDED_URLS:
+        clean_url = normalize_url(raw_url)
+        
+        if clean_url not in post_links and "page=" not in raw_url and clean_url not in EXCLUDED_URLS:
             post_links.append(clean_url)
 
     existing_records = supabase.table('listings').select('url').in_('url', post_links).execute()
