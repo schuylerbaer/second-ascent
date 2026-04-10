@@ -7,7 +7,7 @@ interface FlattenedAlert {
   brand: string
   model: string
   size: string
-  size_unit: 'EU' | 'US' // Added to track which unit the DB holds
+  size_unit: 'EU' | 'US'
   gender: string
   is_active: boolean
 }
@@ -27,8 +27,6 @@ export default function Dashboard() {
   const [formData, setFormData] = useState({ category: 'Shoe', brand: 'La Sportiva', model: 'Miura VS', size: '42', gender: 'U' })
   const [sizeUnit, setSizeUnit] = useState<'EU' | 'US'>('EU')
   
-  const [toastMessage, setToastMessage] = useState<string | null>(null)
-
   useEffect(() => {
     fetchAlerts()
   }, [])
@@ -58,7 +56,6 @@ export default function Dashboard() {
           criteria[c.key] = c.value
         })
 
-        // Determine if this alert was saved as EU or US size
         let extractedSize = 'Any'
         let extractedUnit: 'EU' | 'US' = 'EU'
         
@@ -86,43 +83,6 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  // --- RETROACTIVE SCANNER ---
-  async function runRetroactiveSearch(categoryId: number, criteria: any, unit: 'EU' | 'US') {
-    // FIX 1: Ordered by 'id' instead of 'created_at' to prevent the 400 error
-    const { data } = await supabase
-      .from('items')
-      .select(`
-        id,
-        item_attributes ( key, value ),
-        listings ( url )
-      `)
-      .eq('category_id', categoryId)
-      .order('id', { ascending: false })
-      .limit(50)
-
-    if (!data) return 0
-
-    // FIX 2: Check against the exact size unit
-    const expectedSizeKey = unit === 'EU' ? 'eu_size' : 'us_size'
-
-    const matches = data.filter((item: any) => {
-      const attrs: Record<string, string> = {}
-      item.item_attributes.forEach((attr: any) => {
-        attrs[attr.key] = attr.value
-      })
-
-      const matchesBrand = attrs['brand'] === criteria.brand
-      const matchesModel = attrs['model'] === criteria.model
-      const matchesSize = attrs[expectedSizeKey] === criteria.size
-      const matchesGender = criteria.gender === 'U' ? true : attrs['gender'] === criteria.gender
-
-      return matchesBrand && matchesModel && matchesSize && matchesGender
-    })
-
-    return matches.length
-  }
-
-  // --- MODAL HANDLERS ---
   const openNewAlertModal = () => {
     setEditingAlertId(null)
     setFormData({ category: 'Shoe', brand: 'La Sportiva', model: 'Miura VS', size: '42', gender: 'U' }) 
@@ -167,7 +127,6 @@ export default function Dashboard() {
       currentAlertId = newAlert?.id
     }
 
-    // FIX 2: Dynamically save eu_size or us_size based on the toggle
     if (currentAlertId) {
       const dbSizeKey = sizeUnit === 'EU' ? 'eu_size' : 'us_size'
       
@@ -181,13 +140,6 @@ export default function Dashboard() {
     
     setIsModalOpen(false)
     fetchAlerts() 
-
-    // TRIGGER RETROACTIVE SEARCH
-    const matchCount = await runRetroactiveSearch(categoryId, formData, sizeUnit)
-    if (matchCount > 0) {
-      setToastMessage(`Alert saved! We found ${matchCount} existing items matching this gear.`)
-      setTimeout(() => setToastMessage(null), 5000)
-    }
   }
 
   const toggleAlert = async (id: number, currentStatus: boolean) => {
@@ -368,14 +320,6 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="modal-backdrop" onClick={() => setIsModalOpen(false)}></div>
-        </div>
-      )}
-
-      {toastMessage && (
-        <div className="toast toast-end">
-          <div className="alert alert-success shadow-lg">
-            <span>{toastMessage}</span>
-          </div>
         </div>
       )}
     </div>
