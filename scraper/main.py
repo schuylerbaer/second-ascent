@@ -86,6 +86,7 @@ def run_scraper_pipeline():
                         for match in matches:
                             EmailNotifier.process_and_send(
                                 user_email=match["email"],
+                                user_id=match["user_id"],
                                 alert_id=match["alert_id"],
                                 item_id=item_id,
                                 gear_data={**attributes, "url": post_data['url']}
@@ -129,6 +130,7 @@ def run_retroactive_alert_sweep():
 
             EmailNotifier.process_and_send(
                 user_email=user_email,
+                user_id=alert["user_id"],
                 alert_id=alert_id,
                 item_id=item_id,
                 gear_data=gear_data

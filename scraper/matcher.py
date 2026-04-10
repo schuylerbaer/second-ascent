@@ -59,6 +59,7 @@ class GearMatcher:
             if GearMatcher._is_match(new_item_attributes, criteria_list):
                 users_to_notify.append({
                     "email": alert["users"]["email"],
+                    "user_id": alert["user_id"],
                     "alert_id": alert["id"]
                 })
 

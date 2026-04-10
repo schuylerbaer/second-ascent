@@ -98,6 +98,23 @@ export default function Dashboard() {
   }
 
   const saveAlert = async () => {
+    // --- PREVENT DUPLICATES ---
+    if (!editingAlertId) {
+      const isDuplicate = alerts.some(a =>
+        a.category_name === formData.category &&
+        a.brand === formData.brand &&
+        a.model === formData.model &&
+        a.size === formData.size &&
+        a.size_unit === sizeUnit &&
+        a.gender === formData.gender
+      )
+
+      if (isDuplicate) {
+        alert("You already have an alert tracking this exact gear!")
+        return
+      }
+    }
+
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
 

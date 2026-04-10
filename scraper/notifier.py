@@ -10,14 +10,19 @@ SENDER_EMAIL = os.environ.get("SENDER_EMAIL")
 APP_PASSWORD = os.environ.get("APP_PASSWORD")
 
 class EmailNotifier:
-    @staticmethod
-    def process_and_send(user_email: str, alert_id: int, item_id: int, gear_data: dict):
-        existing = supabase.table("sent_notifications").select("*").eq(
-            "alert_id", alert_id
-        ).eq("item_id", item_id).execute()
 
-        if existing.data:
-            print(f"Alert {alert_id} already notified about Item {item_id}.")
+    @staticmethod
+    def process_and_send(user_email: str, user_id: str, alert_id: int, item_id: int, gear_data: dict):
+        try:
+            supabase.table("sent_notifications").insert({
+                "user_id": user_id,
+                "item_id": item_id
+            }).execute()
+        except Exception as e:
+            if '23505' in str(e) or 'duplicate key' in str(e).lower():
+                print(f"User {user_email} already notified about Item {item_id}. Skipping overlap.")
+                return
+            print(f"Database error claiming lock for User {user_email}: {e}")
             return
 
         brand = gear_data.get('brand', 'Unknown Brand')
@@ -75,11 +80,6 @@ Check out the post here: {url}
                 smtp.send_message(msg)
                 
             print(f"Email successfully sent to {user_email} for {brand} {model}!")
-
-            supabase.table("sent_notifications").insert({
-                "alert_id": alert_id,
-                "item_id": item_id
-            }).execute()
 
         except Exception as e:
             print(f"ERROR --- failed to send email to {user_email}: {e}")
