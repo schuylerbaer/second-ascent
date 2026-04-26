@@ -291,7 +291,7 @@ export default function Browse() {
                 onClick={() => setVisibleCount(prev => prev + ITEMS_PER_PAGE)}
                 className="bg-white border-2 border-slate-200 text-slate-700 font-semibold px-8 py-3 rounded-full hover:border-blue-500 hover:text-blue-600 transition-all"
               >
-                Load More Matches
+                Load More
               </button>
             </div>
           )}
