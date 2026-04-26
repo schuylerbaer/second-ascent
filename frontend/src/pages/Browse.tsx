@@ -298,7 +298,7 @@ export default function Browse() {
           
           {!hasMore && displayedItems.length > 0 && (
             <div className="mt-12 text-center text-slate-400 text-sm font-medium">
-              You've reached the end of the filtered results.
+              That's all :(
             </div>
           )}
         </>
