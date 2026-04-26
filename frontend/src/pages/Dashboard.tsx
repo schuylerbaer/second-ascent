@@ -29,7 +29,6 @@ const ALIAS_MAP: Record<string, string> = {
   'solutions': 'Solution',
 }
 
-// Helper function to clean strings
 const normalizeString = (rawStr: string) => {
   if (!rawStr) return ''
   const cleanStr = rawStr.trim()
