@@ -143,7 +143,7 @@ export default function Browse() {
   const clearFilters = () => {
     setFilters({ brand: '', model: '', size: '', gender: '' })
     setSizeUnit('EU')
-    setVisibleCount(ITEMS_PER_PAGE) // Reset pagination
+    setVisibleCount(ITEMS_PER_PAGE)
   }
 
   return (

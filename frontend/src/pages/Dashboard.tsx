@@ -251,7 +251,7 @@ export default function Dashboard() {
     })
 
     if (isDuplicate) {
-      setFormError("You already have an alert tracking this exact gear!")
+      setFormError("You already have an alert for this!")
       return
     }
 
